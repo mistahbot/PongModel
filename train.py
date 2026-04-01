@@ -16,10 +16,10 @@ def normalize_state(game:logic.Game):
     ]).reshape(6, 1)
     return state
 
-learning_rate = 0.0
+learning_rate = 0.0005
 discount_factor = 0.99
-batch_size = 32
-sync_interval = 20
+batch_size = 64
+sync_interval = 10
 epsilon = 1.0
 epsilon_decay = 0.9999
 epsilon_min = 0.05
@@ -29,7 +29,7 @@ buffer = ReplayBuffer.ReplayBuffer(70000)
 
 online_net = NeuralNetwork.NeuralNetwork(6, 64, 64, 3)
 target_net = NeuralNetwork.NeuralNetwork(6, 64, 64, 3)
-online_net.load_state()
+#online_net.load_state()
 
 target_net.copy_weights(online_net)
 
@@ -91,5 +91,4 @@ for episode in range (10000):
     if episode % sync_interval == 0:
         target_net.copy_weights(online_net)
         print(f"Episode {episode} | Reward : {total_reward} | Epsilon {epsilon:.2f} | Score {env.get_score()}")
-
-online_net.save_state()
+        online_net.save_state()

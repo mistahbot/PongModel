@@ -37,6 +37,10 @@ class Game:
         if coef == None:
             coef = self.vy_ball / self.ball_y_max_speed
         self.vx_ball = -self.vx_ball
+        if self.vx_ball < 0:
+            self.pos_x_ball -= self.dim_x * 1.01
+        else:
+            self.pos_x_ball += self.dim_x * 1.01
         self.vy_ball = coef * self.ball_y_max_speed
     
     def change_dir_ball_env_collision(self):
