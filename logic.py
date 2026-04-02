@@ -33,14 +33,14 @@ class Game:
         if (random.random() < 0.5):
             self.vy_ball = -self.vy_ball
 
-    def change_dir_ball(self, coef=None):
+    def change_dir_ball(self, x_pos, coef=None):
         if coef == None:
             coef = self.vy_ball / self.ball_y_max_speed
         self.vx_ball = -self.vx_ball
         if self.vx_ball < 0:
-            self.pos_x_ball -= self.dim_x * 1.01
+            self.pos_x_ball = x_pos - self.dim - 1
         else:
-            self.pos_x_ball += self.dim_x * 1.01
+            self.pos_x_ball = x_pos + self.dim_x + self.dim + 1
         self.vy_ball = coef * self.ball_y_max_speed
     
     def change_dir_ball_env_collision(self):
@@ -72,12 +72,12 @@ class Game:
     def check_player_collision(self):
         if self.rectangle_overlap(self.get_player1_coords(), self.get_ball_coords()):
             relative_pos_on_the_paddle = ((self.pos_y_ball + self.dim / 2) - (self.pos_y_p1 + self.dim_y / 2)) / (self.dim_y / 2)
-            self.change_dir_ball(relative_pos_on_the_paddle)
+            self.change_dir_ball(self.pos_x_p1, relative_pos_on_the_paddle)
             return 1
 
         if self.rectangle_overlap(self.get_player2_coords(), self.get_ball_coords()):
             relative_pos_on_the_paddle = ((self.pos_y_ball + self.dim / 2) - (self.pos_y_p2 + self.dim_y / 2)) / (self.dim_y / 2)
-            self.change_dir_ball(relative_pos_on_the_paddle)
+            self.change_dir_ball(self.pos_x_p2, relative_pos_on_the_paddle)
             return 2
         return 0
 

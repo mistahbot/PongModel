@@ -18,6 +18,18 @@ def normalize_state(game:logic.Game):
     return state
 
 
+def normalize_state_mirror(game:logic.Game):
+    state_dict = game.get_state()
+    state = np.array([
+        state_dict["pos_y_p2"] / 600,
+        state_dict["pos_y_p1"] / 600,
+        (logic.SCREEN_SIZE[1] - state_dict["pos_ball_x"]) / 600,
+        state_dict["pos_ball_y"] / 600,
+        -state_dict["velocity_ball_x"] / 4,
+        state_dict["velocity_ball_y"] / 4
+    ]).reshape(6, 1)
+    return state
+
 
 
 pygame.init()
@@ -26,8 +38,11 @@ clock = pygame.time.Clock()
 running = True
 font = pygame.font.Font(None, 50)
 
-nn = NeuralNetwork.NeuralNetwork(6, 64, 64, 3)
-nn.load_state()
+nn1 = NeuralNetwork.NeuralNetwork(6, 64, 64, 3)
+nn1.load_state("model_10k_episodes.json")
+
+nn2 = NeuralNetwork.NeuralNetwork(6, 64, 64, 3)
+nn2.load_state("model_10k_episodes.json")
 
 game = logic.Game()
 
@@ -42,20 +57,30 @@ while running:
     # moving the players
 
     state = normalize_state(game)
-    action = np.argmax(nn.Predict(state))
+    action = np.argmax(nn2.Predict(state))
     move_p2 = 0
     if action == 1:
         move_p2 = -1
     elif action == 2:
         move_p2 = 1
-
     game.pos_y_p2 += logic.MOVE * move_p2
 
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_w]:
-        game.pos_y_p1 -= logic.MOVE
-    if keys[pygame.K_s]:
-        game.pos_y_p1 += logic.MOVE
+
+    state = normalize_state_mirror(game)
+    action = np.argmax(nn1.Predict(state))
+    move_p1 = 0
+    if action == 1:
+        move_p1 = -1
+    elif action == 2:
+        move_p1 = 1
+
+    game.pos_y_p1 += logic.MOVE * move_p1
+
+#    keys = pygame.key.get_pressed()
+#    if keys[pygame.K_w]:
+#        game.pos_y_p1 -= logic.MOVE
+#    if keys[pygame.K_s]:
+#        game.pos_y_p1 += logic.MOVE
 #   if keys[pygame.K_i]:
 #        game.pos_y_p2 -= logic.MOVE
 #    if keys[pygame.K_k]:
@@ -66,7 +91,7 @@ while running:
     game.pos_x_ball += game.vx_ball
     game.pos_y_ball += game.vy_ball
 
-    # checking collisionsw
+    # checking collisions
 
     # ceiling collsion
     if game.pos_y_ball < 0 or game.pos_y_ball + game.dim > logic.SCREEN_SIZE[1]:
