@@ -2,7 +2,7 @@ import logic
 import pygame
 import NeuralNetwork
 import numpy as np
-
+import sys
 
 
 def normalize_state(game:logic.Game):
@@ -38,11 +38,24 @@ clock = pygame.time.Clock()
 running = True
 font = pygame.font.Font(None, 50)
 
+model1 = "model.json"
+model2 = "model.json"
+ok_human1 = 1
+ok_human2 = 1
+if len(sys.argv) >= 2:
+    if len(sys.argv[1]) == 2:
+        ok_human1 = (sys.argv[1][0] == '1')
+        ok_human2 = (sys.argv[1][1] == '1')
+if len(sys.argv) >= 3:
+    model1 = sys.argv[2]
+if len(sys.argv) >= 4:
+    model2 = sys.argv[3]
+
 nn1 = NeuralNetwork.NeuralNetwork(6, 64, 64, 3)
-nn1.load_state("model_10k_episodes.json")
+nn1.load_state(model1)
 
 nn2 = NeuralNetwork.NeuralNetwork(6, 64, 64, 3)
-nn2.load_state("model_10k_episodes.json")
+nn2.load_state(model2)
 
 game = logic.Game()
 
@@ -55,36 +68,40 @@ while running:
             running = False
 
     # moving the players
+    keys = pygame.key.get_pressed()
 
-    state = normalize_state(game)
-    action = np.argmax(nn2.Predict(state))
-    move_p2 = 0
-    if action == 1:
-        move_p2 = -1
-    elif action == 2:
-        move_p2 = 1
-    game.pos_y_p2 += logic.MOVE * move_p2
+    if ok_human2 == 0:
+        state = normalize_state(game)
+        action = np.argmax(nn2.Predict(state))
+        move_p2 = 0
+        if action == 1:
+            move_p2 = -1
+        elif action == 2:
+            move_p2 = 1
+        game.pos_y_p2 += logic.MOVE * move_p2
+    else:
+        if keys[pygame.K_i]:
+            game.pos_y_p2 -= logic.MOVE
+        if keys[pygame.K_k]:
+            game.pos_y_p2 += logic.MOVE
 
 
-    state = normalize_state_mirror(game)
-    action = np.argmax(nn1.Predict(state))
-    move_p1 = 0
-    if action == 1:
-        move_p1 = -1
-    elif action == 2:
-        move_p1 = 1
+    if ok_human1 == 0:
+        state = normalize_state_mirror(game)
+        action = np.argmax(nn1.Predict(state))
+        move_p1 = 0
+        if action == 1:
+            move_p1 = -1
+        elif action == 2:
+            move_p1 = 1
+        game.pos_y_p1 += logic.MOVE * move_p1
+    else:
+        if keys[pygame.K_w]:
+            game.pos_y_p1 -= logic.MOVE
+        if keys[pygame.K_s]:
+            game.pos_y_p1 += logic.MOVE
 
-    game.pos_y_p1 += logic.MOVE * move_p1
-
-#    keys = pygame.key.get_pressed()
-#    if keys[pygame.K_w]:
-#        game.pos_y_p1 -= logic.MOVE
-#    if keys[pygame.K_s]:
-#        game.pos_y_p1 += logic.MOVE
-#   if keys[pygame.K_i]:
-#        game.pos_y_p2 -= logic.MOVE
-#    if keys[pygame.K_k]:
-#        game.pos_y_p2 += logic.MOVE
+    
     game.snap_back_to_screen()
 
     # moving the ball

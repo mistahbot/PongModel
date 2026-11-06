@@ -3,6 +3,7 @@ import NeuralNetwork
 import logic
 import numpy as np
 import random
+import sys
 
 def normalize_state(game:logic.Game):
     state_dict = game.get_state()
@@ -16,20 +17,40 @@ def normalize_state(game:logic.Game):
     ]).reshape(6, 1)
     return state
 
+def normalize_state_mirror(game:logic.Game):
+    state_dict = game.get_state()
+    state = np.array([
+        state_dict["pos_y_p2"] / 600,
+        state_dict["pos_y_p1"] / 600,
+        (logic.SCREEN_SIZE[1] - state_dict["pos_ball_x"]) / 600,
+        state_dict["pos_ball_y"] / 600,
+        -state_dict["velocity_ball_x"] / 4,
+        state_dict["velocity_ball_y"] / 4
+    ]).reshape(6, 1)
+    return state
+
 learning_rate = 0.0005
 discount_factor = 0.99
 batch_size = 64
 sync_interval = 10
 epsilon = 1.0
 epsilon_decay = 0.9999
-epsilon_min = 0.05
+epsilon_min = 0.05 
 
 env = logic.Game()
 buffer = ReplayBuffer.ReplayBuffer(70000)
 
 online_net = NeuralNetwork.NeuralNetwork(6, 64, 64, 3)
 target_net = NeuralNetwork.NeuralNetwork(6, 64, 64, 3)
-#online_net.load_state()
+
+ok_load = 0
+if len(sys.argv) >= 2:
+    ok_load = (sys.argv[1] == "1")
+model_file = "model.json"
+if len(sys.argv) >= 3:
+    model_file = sys.argv[2]
+if ok_load:
+    online_net.load_state(model_file)
 
 target_net.copy_weights(online_net)
 
@@ -91,4 +112,4 @@ for episode in range (10000):
     if episode % sync_interval == 0:
         target_net.copy_weights(online_net)
         print(f"Episode {episode} | Reward : {total_reward} | Epsilon {epsilon:.2f} | Score {env.get_score()}")
-        online_net.save_state()
+        online_net.save_state(model_file)
